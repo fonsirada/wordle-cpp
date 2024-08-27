@@ -1,7 +1,7 @@
 /**
  * @file wordle.cpp
  * @author Alfonso Rada
- * @brief Wordle subclass method definitions file
+ * @brief Wordle class method definitions file
  * @date 2024-05-08
  * 
  * @copyright Copyright (c) 2024
@@ -31,205 +31,7 @@ Wordle::Wordle(string answer, vector<string> words) {
     }
 }
 
-/**
- * @brief Checks if recent attempt is the answer
- * 
- */
-void Wordle::check() {
-    string word = _attempts[_attempts.size() - 1];
-    if (word == _answer) {
-        _solved = true;
-        return;
-    }
-}
-
-/**
- * @brief Prints out individual characters, 
- * depending on if it is in the Wordle answer
- * 
- * @param ch - the character
- * @param index - the index of the character in the word attempt
- */
-void Wordle::print_char(char ch, int index) {
-    //checks if character is in answer 
-    init_pair(1, COLOR_WHITE, COLOR_BLACK);
-    init_pair(2, COLOR_WHITE, COLOR_GREEN);
-    init_pair(3, COLOR_WHITE, COLOR_YELLOW);
-    //same index, mark it as green
-    if (ch == _answer[index]) {
-        attron(COLOR_PAIR(2));
-        printw("%c", ch);
-        _letters_green[ch - 97] = true;
-        attroff(COLOR_PAIR(2));
-    }
-    //Different index, mark as yellow
-    else if (_answer.find(ch) != string::npos) {
-        attron(COLOR_PAIR(3));
-        printw("%c", ch);
-        _letters_yellow[ch - 97] = true;
-        attroff(COLOR_PAIR(3));
-    }
-    //if character not in the answer, dont give it a highlight
-    else {
-        attron(COLOR_PAIR(1));
-        printw("%c", ch);
-        attroff(COLOR_PAIR(1));
-    }
-    _letters_attempted[ch - 97] = true;
-}
-
-/**
- * @brief Shows the letters that the user has attempted
- * and whether or not they are in the answer
- * 
- */
-void Wordle::show_letters() {
-    init_pair(1, COLOR_WHITE, COLOR_BLACK);
-    init_pair(2, COLOR_WHITE, COLOR_GREEN);
-    init_pair(3, COLOR_WHITE, COLOR_YELLOW);
-    for (int i = 0; i < _letters.size(); i++) {
-        if (_letters_attempted[i] == true) {
-            if (_letters_green[i] == true) {
-                attron(COLOR_PAIR(2));
-                printw("%c", _letters[i]);
-                attroff(COLOR_PAIR(2));
-            }
-            else if (_letters_yellow[i] == true) {
-                attron(COLOR_PAIR(3));
-                printw("%c", _letters[i]);
-                attroff(COLOR_PAIR(3));
-            }
-            else {
-                attron(COLOR_PAIR(1));
-                printw("%c", _letters[i]);
-                attroff(COLOR_PAIR(1));
-            }
-        }
-        else {
-            attron(COLOR_PAIR(1));
-            printw("%c", ' ');
-            attroff(COLOR_PAIR(1));
-        }
-    }
-}
-
-/**
- * @brief Function that prints out the Wordle grid
- * 
- */
-void Wordle::show_grid() {
-    show_letters();
-    addstr("\n\n");
-    for (int i = 0; i < _attempted.size(); i++) {
-        //prints out user attempts in wordle grid
-        if (_attempted[i] == true) {
-            for (int j = 0; j < 5; j++) {
-                //checks and prints characters of each attempt
-                int ch = _attempts_by_char[i][j];
-                print_char(ch, j);
-            }
-        }
-        //prints attempts left as empty strings in wordle grid
-        else {
-            for (int k = 0; k < 5; k++) {
-                init_pair(4, COLOR_WHITE, COLOR_WHITE);
-                attron(COLOR_PAIR(4));
-                printw("%c", ' '); 
-                attroff(COLOR_PAIR(4));
-            }
-        }
-        addstr("\n");
-    }
-    addstr("\n");
-}
-
-/**
- * @brief Start of wordle program, sets up the interface in the terminal
- * source for learning how to use ncurses: https://tldp.org/HOWTO/NCURSES-Programming-HOWTO/
- */
-void Wordle::intro() {
-    initscr();
-    cbreak();
-    noecho();
-    mousemask(0, nullptr);
-    start_color();
-    init_pair(1, COLOR_WHITE, COLOR_BLACK);
-    attron(COLOR_PAIR(1));
-    addstr("Welcome to Wordle! You have 6 attempts to guess a 5 letter word. ");
-    addstr("You can only guess real five letter words. \n");
-    addstr("If a letter is green, it is in the answer and in the same index. ");
-    addstr("If a letter is yellow, it is in the answer, but in a different index.\n");
-    addstr("If a letter is not highlighted, it is not in the answer.");
-    attroff(COLOR_PAIR(1));
-}
-
-/**
- * @brief Method that checks if the game is still active
- * (if the user has guessed the word or if the user has reached 6 attempts)
- * 
- * @return true - active
- * @return false - not active
- */
-bool Wordle::is_active() {
-    if (_solved) {
-        return false;
-    }
-    if (_attempts.size() >= 6) {
-        return false;
-    }
-    return true;
-}
-
-/**
- * @brief Method that carries out the playing of the game
- * stops running when game is no longer active.
- * 
- */
-void Wordle::play() {
-    intro();
-    while (is_active()) {
-        show_grid();
-        make_attempt();
-        check();
-        show_grid();
-        clear();
-    }
-    if (_solved) {
-        show_grid();
-        printw("Correct! Nice job!\n");
-    }
-    else {
-        show_grid();
-        printw("Game over! The word was: ");
-        printw("%s\n", _answer.c_str());
-    }
-    printw("Press any key to exit the game.");
-    refresh();
-    getch();
-    endwin();
-}
-
-/**
- * @brief Operator that prints out in the terminal, after the game runs,
- * tells the user if they got the Wordle and in how many attempts.
- * Also tells the user what the answer was.
- * 
- * @param out - output
- * @param wordle - wordle game
- * @return ostream& - output
- */
-ostream & operator<<(ostream & out, const Wordle & wordle) {
-    out << "The answer to the Wordle was: " << wordle._answer << "." << endl;
-    if (wordle._solved) {
-        out << "You got the answer in " << wordle._attempts.size() << " attempts.";
-    }
-    else {
-        out << "You did not get the answer.";
-    }
-    return out;
-}
-
-///////// added from wordgame /////////
+////////// functions for making attempts and checking them //////////
 
 /**
  * @brief Adds user attempt to vector of attempts
@@ -333,4 +135,206 @@ void Wordle::make_attempt() {
     addstr("\n\n");
     //adds attempt to wordle grid
     add_attempt(userInput);
+}
+
+/**
+ * @brief Checks if recent attempt is the answer
+ * 
+ */
+void Wordle::check() {
+    string word = _attempts[_attempts.size() - 1];
+    if (word == _answer) {
+        _solved = true;
+        return;
+    }
+}
+
+////////// functions for printing out the UI (wordle grid) //////////
+
+/**
+ * @brief Prints out individual characters, 
+ * depending on if it is in the Wordle answer
+ * 
+ * @param ch - the character
+ * @param index - the index of the character in the word attempt
+ */
+void Wordle::print_char(char ch, int index) {
+    //checks if character is in answer 
+    init_pair(1, COLOR_WHITE, COLOR_BLACK);
+    init_pair(2, COLOR_WHITE, COLOR_GREEN);
+    init_pair(3, COLOR_WHITE, COLOR_YELLOW);
+    //same index, mark it as green
+    if (ch == _answer[index]) {
+        attron(COLOR_PAIR(2));
+        printw("%c", ch);
+        _letters_green[ch - 97] = true;
+        attroff(COLOR_PAIR(2));
+    }
+    //Different index, mark as yellow
+    else if (_answer.find(ch) != string::npos) {
+        attron(COLOR_PAIR(3));
+        printw("%c", ch);
+        _letters_yellow[ch - 97] = true;
+        attroff(COLOR_PAIR(3));
+    }
+    //if character not in the answer, dont give it a highlight
+    else {
+        attron(COLOR_PAIR(1));
+        printw("%c", ch);
+        attroff(COLOR_PAIR(1));
+    }
+    _letters_attempted[ch - 97] = true;
+}
+
+/**
+ * @brief Shows the letters that the user has attempted
+ * and whether or not they are in the answer
+ * 
+ */
+void Wordle::show_letters() {
+    init_pair(1, COLOR_WHITE, COLOR_BLACK);
+    init_pair(2, COLOR_WHITE, COLOR_GREEN);
+    init_pair(3, COLOR_WHITE, COLOR_YELLOW);
+    for (int i = 0; i < _letters.size(); i++) {
+        if (_letters_attempted[i] == true) {
+            if (_letters_green[i] == true) {
+                attron(COLOR_PAIR(2));
+                printw("%c", _letters[i]);
+                attroff(COLOR_PAIR(2));
+            }
+            else if (_letters_yellow[i] == true) {
+                attron(COLOR_PAIR(3));
+                printw("%c", _letters[i]);
+                attroff(COLOR_PAIR(3));
+            }
+            else {
+                attron(COLOR_PAIR(1));
+                printw("%c", _letters[i]);
+                attroff(COLOR_PAIR(1));
+            }
+        }
+        else {
+            attron(COLOR_PAIR(1));
+            printw("%c", ' ');
+            attroff(COLOR_PAIR(1));
+        }
+    }
+}
+
+/**
+ * @brief Function that prints out the Wordle grid
+ * 
+ */
+void Wordle::show_grid() {
+    show_letters();
+    addstr("\n\n");
+    for (int i = 0; i < _attempted.size(); i++) {
+        //prints out user attempts in wordle grid
+        if (_attempted[i] == true) {
+            for (int j = 0; j < 5; j++) {
+                //checks and prints characters of each attempt
+                int ch = _attempts_by_char[i][j];
+                print_char(ch, j);
+            }
+        }
+        //prints attempts left as empty strings in wordle grid
+        else {
+            for (int k = 0; k < 5; k++) {
+                init_pair(4, COLOR_WHITE, COLOR_WHITE);
+                attron(COLOR_PAIR(4));
+                printw("%c", ' '); 
+                attroff(COLOR_PAIR(4));
+            }
+        }
+        addstr("\n");
+    }
+    addstr("\n");
+}
+
+/**
+ * @brief Method that checks if the game is still active
+ * (if the user has guessed the word or if the user has reached 6 attempts)
+ * 
+ * @return true - active
+ * @return false - not active
+ */
+bool Wordle::is_active() {
+    if (_solved) {
+        return false;
+    }
+    if (_attempts.size() >= 6) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * @brief Start of wordle program, sets up the interface in the terminal
+ * source for learning how to use ncurses: https://tldp.org/HOWTO/NCURSES-Programming-HOWTO/
+ */
+void Wordle::intro() {
+    initscr();
+    cbreak();
+    noecho();
+    mousemask(0, nullptr);
+    start_color();
+    init_pair(1, COLOR_WHITE, COLOR_BLACK);
+    attron(COLOR_PAIR(1));
+    addstr("Welcome to Wordle! You have 6 attempts to guess a 5 letter word. ");
+    addstr("You can only guess real five letter words. \n");
+    addstr("If a letter is green, it is in the answer and in the same index. ");
+    addstr("If a letter is yellow, it is in the answer, but in a different index.\n");
+    addstr("If a letter is not highlighted, it is not in the answer.");
+    attroff(COLOR_PAIR(1));
+}
+
+////////// function for gameplay //////////
+
+/**
+ * @brief Method that carries out the playing of the game
+ * stops running when game is no longer active.
+ * 
+ */
+void Wordle::play() {
+    intro();
+    while (is_active()) {
+        show_grid();
+        make_attempt();
+        check();
+        show_grid();
+        clear();
+    }
+    if (_solved) {
+        show_grid();
+        printw("Correct! Nice job!\n");
+    }
+    else {
+        show_grid();
+        printw("Game over! The word was: ");
+        printw("%s\n", _answer.c_str());
+    }
+    printw("Press any key to exit the game.");
+    refresh();
+    getch();
+    endwin();
+}
+
+/**
+ * @brief Operator that prints out in the terminal, after the game runs,
+ * tells the user if they got the Wordle and in how many attempts.
+ * Also tells the user what the answer was.
+ * 
+ * @param out - output
+ * @param wordle - wordle game
+ * @return ostream& - output
+ */
+ostream & operator<<(ostream & out, const Wordle & wordle) {
+    out << "The answer to the Wordle was: " << wordle._answer << "." << endl;
+    if (wordle._solved) {
+        out << "You got the answer in " << wordle._attempts.size() << " attempts.";
+    }
+    else {
+        out << "You did not get the answer.";
+    }
+    return out;
 }

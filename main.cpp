@@ -26,4 +26,5 @@ int main(int argc, char ** argv) {
     string randomWord = words[randomIndex];
     Wordle game(randomWord, words);
     game.play();
+    cout << game << endl;
 }
