@@ -4,7 +4,7 @@ project(wordle)
 set(CMAKE_CXX_STANDARD 14)
 
 add_executable(
-    worle
+    wordle
     main.cpp
     wordle.cpp
 )
