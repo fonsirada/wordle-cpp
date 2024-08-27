@@ -8,3 +8,5 @@ add_executable(
     main.cpp
     wordle.cpp
 )
+
+target_link_libraries(wordle ncurses)

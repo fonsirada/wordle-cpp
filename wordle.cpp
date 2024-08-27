@@ -9,6 +9,7 @@
  */
 
 #include "wordle.h" 
+#include "ncurses.h"
 
 /**
  * @brief Construct a new Wordle game
